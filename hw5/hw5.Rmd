@@ -1,0 +1,95 @@
+---
+title: "Homework 5"
+author: "Drew Dahlquist"
+date: "3/8/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1)
+
+```{r 1}
+Default = read.csv("Default.csv", stringsAsFactors = TRUE)
+Default = Default[,-1] # Remove the first index column
+summary(Default)
+```
+
+(a)
+
+```{r 1a}
+glm.fit = glm(default ~ income + balance, family=binomial, data=Default)
+summary(glm.fit)
+```
+
+(b)
+
+```{r 1b}
+glm.probs = predict(glm.fit,type="response")
+glm.pred=rep("No", length(Default$default))
+glm.pred[glm.probs > 0.5] = "Yes"
+table(glm.pred, Default$default)
+```
+
+Error rate is `r (9629+108)/(225+38)`.
+
+(c)
+
+```{r 1c}
+set.seed(1)
+size=length(Default$default)
+train=sample(size, 0.7*size)
+```
+
+(d)
+
+```{r 1d}
+glm.fit = glm(default ~ income + balance, family=binomial, data=Default, subset=train)
+summary(glm.fit)
+```
+
+(e)
+
+```{r 1e}
+glm.probs = predict(glm.fit,type="response")[-train]
+glm.pred=rep("No", length(Default$default[-train]))
+glm.pred[glm.probs > 0.5] = "Yes"
+table(glm.pred, Default$default[-train])
+```
+
+Error rate is `r (2846+2)/(100+52)`.
+
+The test error rate obtained from the model trained on a train/test split is one half that of the training error rate obtained from the model trained only on training data in part (b). This is likely due to overfitting of the model, since training error rate can be made arbitrarily small, whereas the test error is assumed to not be able to go below some non-zero threshold due to noise.
+
+### 2)
+
+```{r 2}
+Auto=read.csv("Auto.csv", na.strings ="?") # With the option, R recognizes ? as NA.
+Auto=na.omit(Auto) # Remove data rows including NA.
+Auto$origin=as.factor(Auto$origin) # Coerce the type of origin into factor
+```
+
+(a)
+
+```{r 2a}
+# LOOCV
+res=numeric(length = 392)
+for (i in 1:392) {
+  lmfit.loocv=lm(mpg ~ horsepower, data = Auto[-i, ])
+  yhat=predict(lmfit.loocv, data.frame(horsepower = Auto$horsepower[i]))
+  res[i] <- Auto[i,]$mpg - yhat
+}
+mean(res^2)
+```
+
+The outcome is exactly the same as the standard CV estimate obtained from `cv.glm()`.
+
+(b)
+
+The option `data = Auto[-i, ]` is exactly what is performing "leave one out" part of LOOCV for us. It is selecting all indices from the `Auto` data except the i'th value (i.e. it's leaving the i'th value out).
+
+(c)
+
+The input `data.frame(horsepower = Auto$horsepower[i])` is telling `predict()` to make a prediction on the i'th value of `Auto$horsepower`. This combined with what is explained in part (b), completes the LOOCV by fitting a model on all but one data point, then using the leftover data point to assess the error.

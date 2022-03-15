@@ -1,0 +1,338 @@
+---
+title: "STAT 4510 HW1"
+author: "Drew Dahlquist"
+date: "1/21/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 1
+
+### 2.3.1 Basic Commands
+
+```{r}
+x = c(1,2,3,5)
+x
+```
+
+```{r}
+x = c(1,6,2)
+x
+y = c(1,4,3)
+```
+
+```{r}
+length(x)
+length(y)
+x+y
+```
+
+```{r}
+ls()
+rm(x,y)
+ls()
+```
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+?matrix
+```
+
+```{r}
+x=matrix(data=c(1,2,3,4), nrow=2, ncol=2)
+x
+```
+
+```{r}
+matrix(c(1,2,3,4),2,2,byrow=TRUE)
+```
+
+```{r}
+sqrt(x)
+x^2
+```
+
+```{r}
+x=rnorm(50)
+y=x+rnorm(50,mean=50,sd=.1)
+cor(x,y)
+```
+
+```{r}
+set.seed(1303)
+rnorm(50)
+```
+
+```{r}
+set.seed(3)
+y=rnorm(100)
+mean(y)
+var(y)
+sqrt(var(y))
+sd(y)
+```
+
+### 2.3.2 Graphics
+
+```{r}
+x=rnorm(100)
+y=rnorm(100)
+plot(x,y)
+plot(x,y,xlab="this is the x-axis",ylab="this is the y-axis", main="Plot of X vs Y")
+```
+
+```{r}
+pdf("Figure.pdf")
+plot(x,y,,col="green")
+dev.off()
+```
+
+```{r}
+x=seq(1,10)
+x
+x=1:10
+x
+x=seq(-pi,pi,length=50)
+```
+
+```{r}
+y=x
+f=outer(x,y,function(x,y)cos(y)/(1+x^2))
+contour(x,y,f)
+contour(x,y,f,nlevels=45,add=T)
+fa=(f-t(f))/2
+contour(x,y,fa,nlevels=15)
+```
+
+```{r}
+image(x,y,fa)
+persp(x,y,fa)
+persp(x,y,fa,theta=30)
+persp(x,y,fa,theta=30,phi=20)
+persp(x,y,fa,theta=30,phi=70)
+persp(x,y,fa,theta=30,phi=40)
+```
+
+### 2.3.3 Indexing Data
+
+```{r}
+A=matrix(1:16,4,4)
+A
+```
+
+```{r}
+A[2,3]
+```
+
+```{r}
+A[c(1,3),c(2,4)]
+A[1:3,2:4]
+A[1:2,]
+A[,1:2]
+```
+
+```{r}
+A[1,]
+```
+
+```{r}
+A[-c(1,3),]
+A[-c(1,3),-c(1,3,4)]
+```
+
+```{r}
+dim(A)
+```
+
+### 2.3.4 Loading Data
+
+```{r}
+Auto=read.table("Auto.data")
+fix(Auto)
+```
+
+```{r}
+Auto=read.table("Auto.data",header=T,na.strings="?")
+fix(Auto)
+```
+
+```{r}
+Auto=read.csv("Auto.csv",header=T,na.strings="?")
+fix(Auto)
+dim(Auto)
+Auto[1:4,]
+```
+
+```{r}
+Auto=na.omit(Auto)
+dim(Auto)
+```
+
+```{r}
+names(Auto)
+```
+
+### 2.3.5 Additional Graphical and Numerical Summaries
+
+```{}
+plot(cylinders, mpg)
+```
+
+```{r}
+plot(Auto$cylinders, Auto$mpg)
+attach(Auto)
+plot(cylinders, mpg)
+```
+
+```{r}
+cylinders=as.factor(cylinders)
+```
+
+```{r}
+plot(cylinders, mpg)
+plot(cylinders, mpg, col="red")
+plot(cylinders, mpg, col="red", varwidth=T)
+plot(cylinders, mpg, col="red", varwidth=T, horizontal=T)
+plot(cylinders, mpg, col="red", varwidth=T, xlab="cylinders", ylab="MPG")
+```
+
+```{r}
+hist(mpg)
+hist(mpg, col=2)
+hist(mpg, col=2, breaks=15)
+```
+
+```{}
+pairs(Auto)
+```
+```{r}
+pairs(~ mpg + displacement + horsepower + weight + acceleration, Auto)
+```
+
+```{r}
+plot(Auto$horsepower, mpg)
+identify(horsepower, mpg, name)
+```
+
+```{r}
+summary(Auto)
+```
+
+```{r}
+summary(mpg)
+```
+
+## Problem 2
+
+```{r echo=FALSE}
+rm(list=ls())
+```
+
+### a)
+
+```{r}
+?rnorm
+```
+The `rnorm` function generates a normal distribution with given mean and sd. You may also give `rnorm` a vector of quantiles or probabilities, a number of observations to make. It also allows for given probabilites to be given as log(p) or as P[X < x].
+
+### b)
+
+```{r echo=FALSE}
+x = 8.5
+red_err = abs(5+0.25*x^2 - (4.8+0.27*x^2))
+```
+
+The reducible error for the prediction is `r red_err`.
+
+### c)
+
+```{r echo=FALSE}
+# observation
+set.seed(45107510)
+x <- rnorm(n=1000, mean=4, sd=2) # locations of x
+ep <- rnorm(n=1000, mean=0, sd=2) # error terms
+y <- 5+0.25*x^2+ep
+p1 <- plot(x, y, xlab="", ylab="", col="blue")
+# true underlying function
+xGrid <- seq(-2, 10, by=0.1)
+fTrue <- 5+0.25*xGrid^2
+p2 <- lines(xGrid, fTrue, col="orange", lwd=3)
+# plus minus two standard deviation
+plusTwoSd <- fTrue + 2
+minusTwoSd <- fTrue - 2
+p3 <- lines(xGrid, plusTwoSd, col="orange", lwd=3, lty=2)
+p4 <- lines(xGrid, minusTwoSd, col="orange", lwd=3, lty=2)
+# legend
+legend(-2, 28, legend=c(expression(f(X)), expression(f(X) %+-% 2)),col=c("orange", "orange"), lty=1:2, lwd=c(3,3))
+```
+
+After changing the sd of the error terms to 2, the sampled data points become less distributed around the true underlying function.
+
+## Problem 3
+
+```{r echo=FALSE}
+rm(list=ls())
+```
+
+### a)
+
+`install.packages("ISLR")`
+```{r}
+library(ISLR)
+
+?Credit
+```
+
+### b)
+
+```{r}
+credit = read.csv("Credit.csv")
+```
+
+### c)
+
+```{r}
+plot(credit$Income, credit$Balance)
+plot(credit$Age, credit$Balance)
+plot(credit$Limit, credit$Balance)
+```
+
+### d)
+
+```{r}
+summary(credit)
+credit$Own = as.factor(credit$Own)
+credit$Student = as.factor(credit$Student)
+credit$Married = as.factor(credit$Married)
+credit$Region = as.factor(credit$Region)
+```
+
+### e)
+
+```{r}
+summary(credit)
+```
+
+The factor variables now the amount of observations for each category for the variable.
+
+### f)
+
+```{r}
+hist(credit$Income, main="Histogram of Income", xlab="Income", ylab="Frequency", col="2")
+hist(credit$Age, main="Histogram of Age", xlab="Age", ylab="Frequency", col="3")
+```
+
+### g)
+
+```{r}
+boxplot(credit$Limit, main="Boxplot of Limit", ylab="Limit", col="2")
+boxplot(credit$Balance, main="Boxplot of Balance", ylab="Balance", col="3")
+```

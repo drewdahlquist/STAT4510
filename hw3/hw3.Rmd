@@ -1,0 +1,257 @@
+---
+title: "Homework 3"
+author: "Drew Dahlquist"
+date: "2/16/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1.
+
+```{r}
+library(MASS)
+library(ISLR)
+```
+
+```{r}
+Boston = read.csv("Boston.csv",stringsAsFactors=TRUE)
+fix(Boston)
+names(Boston)
+```
+
+```{r}
+lm.fit=lm(medv~lstat, data=Boston)
+attach(Boston)
+lm.fit=lm(medv~lstat)
+```
+
+```{r}
+lm.fit
+```
+
+```{r}
+names(lm.fit)
+coef(lm.fit)
+```
+
+```{r}
+confint(lm.fit)
+```
+
+```{r}
+predict(lm.fit,data.frame(lstat=c(5,10,15)),
+        interval="confidence")
+```
+
+```{r}
+predict(lm.fit,data.frame(lstat=c(5,10,15)),
+        interval="prediction")
+```
+
+```{r}
+plot(lstat,medv)
+abline(lm.fit)
+```
+
+```{r}
+plot(lstat,medv)
+abline(lm.fit)
+abline(lm.fit,lwd=3)
+abline(lm.fit,lwd=3,col="red")
+plot(lstat,medv,col="red")
+plot(lstat,medv,pch=20)
+plot(lstat,medv,pch="+")
+plot(1:20,1:20,pch=1:20)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm.fit)
+```
+
+```{r}
+plot(predict(lm.fit), residuals(lm.fit))
+plot(predict(lm.fit), rstudent(lm.fit))
+```
+
+```{r}
+plot(hatvalues(lm.fit))
+which.max(hatvalues(lm.fit))
+```
+
+```{r}
+lm.fit=lm(medv~lstat+age, data=Boston)
+summary(lm.fit)
+```
+
+```{r}
+lm.fit=lm(medv~.,data=Boston)
+summary(lm.fit)
+```
+
+```{r}
+library(car)
+vif(lm.fit)
+```
+
+```{r}
+lm.fit1=lm(medv~.-age,data=Boston)
+summary(lm.fit1)
+```
+
+```{r}
+summary(lm(medv~lstat*age,data=Boston))
+```
+
+```{r}
+lm.fit2=lm(medv~lstat+I(lstat^2),data=Boston)
+summary(lm.fit2)
+```
+
+```{r}
+lm.fit=lm(medv~lstat,data=Boston)
+anova(lm.fit,lm.fit2)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm.fit2)
+```
+
+```{r}
+lm.fit5=lm(medv~poly(lstat,5),data=Boston)
+summary(lm.fit5)
+```
+
+```{r}
+summary(lm(medv~log(rm),data=Boston))
+```
+
+```{r}
+Carseats = read.csv("Carseats.csv",stringsAsFactors=TRUE)
+fix(Carseats)
+names(Carseats)
+```
+
+```{r}
+lm.fit=lm(Sales~.+Income:Advertising+Price:Age,data=Carseats)
+summary(lm.fit)
+```
+
+```{r}
+attach(Carseats)
+contrasts(ShelveLoc)
+```
+
+```{r}
+LoadLibraries=function(){
+  library(ISLR)
+  library(MASS)
+  print("The libraries have been loaded.")
+}
+```
+
+```{r}
+LoadLibraries
+```
+
+```{r}
+LoadLibraries()
+```
+
+### 2.
+
+(2a)
+
+```{r 2a}
+Auto = read.csv("Auto.csv", na.strings="?")
+Auto = na.omit(Auto)
+Auto$origin = as.factor(Auto$origin)
+```
+
+(2b)
+
+The predictor variables that look to be associated with mpg are displacement, horsepower, and weight. Also, cylinders and year look to have a slight assocaition as well, but not as strong as the others mentioned.
+
+```{r 2b}
+pairs(Auto[,1:8])
+```
+
+(2c)
+
+Yes, the outcomes looks to be consistent with what I found from the scatterplot matrix since the predictors that I expected to be correlated with mpg do infact have a high correlation.
+
+There are potential collinearity problems in this data since multiple predictors that look to affect mpg are also highly correlated with eachother (e.g., cylinders, displacement, and horsepower).
+
+```{r 2c}
+cor(Auto[,1:7])
+```
+
+(2d)
+
+Yes, there is a relationship between predictors and the response, seen by an R^2 statistic of 0.8242.
+
+Displacement, Weight, Year, and Origin have a statistically significant relationship to the response.
+
+The coefficient for the year variable suggests that we expect to have a higher mpg for newer cars.
+
+```{r 2d}
+lm.fit.d=lm(mpg~.-name, data=Auto)
+summary(lm.fit.d)
+```
+
+(2e)
+
+```{r 2e}
+contrasts(Auto$origin)
+```
+
+(2f)
+
+The result is not consistent with the significance of cylinders obtained in part d, this is likely due to collinearity within other predictors used to fit the model.
+
+```{r 2f}
+lm.fit.f=lm(mpg~cylinders, data=Auto)
+summary(lm.fit.f)
+```
+
+(2g)
+
+The parameter estimates have changed for most of the predictors. For cylinders, horsepower, and acceleration the standard errors have all increased whereas the t values have all decreased.
+
+According to the VIF for Model-2, the collinearity problem appears to be fixed.
+
+```{r 2g}
+vif(lm.fit.d)
+
+lm.fit.d.2=lm(mpg~cylinders+horsepower+acceleration+year+origin, data=Auto)
+summary(lm.fit.d)
+summary(lm.fit.d.2)
+
+vif(lm.fit.d.2)
+```
+
+(2h)
+
+The residual plots suggest there may be a very small amount of nonlinearity between the response and predictors.
+
+There are a few outliers.
+
+The leverage plot identifies a couple high leverage points.
+
+```{r 2h}
+par(mfrow=c(2,2))
+plot(lm.fit.d.2)
+```
+
+(2i)
+
+Yes, the interactions appears to be statistically significant.
+
+```{r 2i}
+lm.fit.i=lm(mpg~horsepower*origin, data=Auto)
+summary(lm.fit.i)
+```

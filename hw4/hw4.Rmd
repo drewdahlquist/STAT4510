@@ -1,0 +1,108 @@
+---
+title: "Homework 4"
+author: "Drew Dahlquist"
+date: "3/1/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1.
+
+$$\\[3in]$$
+
+### 2.
+
+(a)
+
+P(Y = 1 | X) = `r 1-1/(1.12)`
+
+(b)
+
+P(Y = 1 | X) = `r 0.52/0.48`
+
+### 3.
+
+```{r 3}
+Auto = read.csv("Auto.csv", na.strings="?")
+Auto = na.omit(Auto)
+Auto.class = Auto[,c(1,2,4,6,7,8)]
+Auto.class = Auto.class[Auto.class$origin != '2',]
+Auto.class$origin = as.factor(Auto.class$origin)
+summary(Auto.class)
+```
+
+(a)
+
+```{r 3a}
+glm.fit = glm(origin ~ mpg + cylinders + horsepower + acceleration + year, family=binomial, data=Auto.class)
+summary(glm.fit)
+```
+
+Yes, mpg, cylinders, and year appear to be statistically significant according to the summary.
+
+(b)
+
+The estimated coefficient for cylinders indicates that a 1-unit increase in cylinders will decrease the log-odds of origin by -1.19. Similarly, the coefficient for year indicates that a 1-unit increase in year will decrease the log-odds of origin by -0.19.
+
+(c)
+
+```{r 3c}
+glm.probs = predict(glm.fit,type="response")
+contrasts(Auto.class$origin)
+glm.pred=rep("1", length(Auto.class$origin))
+glm.pred[glm.probs > 0.5] = "3"
+table(glm.pred, Auto.class$origin)
+```
+
+Total fraction of correct predictions is `r (219+57)/length(Auto.class$origin)`.
+
+(d)
+
+```{r 3d}
+library(MASS)
+lda.fit=lda(origin ~ mpg + cylinders + horsepower + acceleration + year, data=Auto.class)
+lda.fit
+```
+
+(e)
+
+```{r 3e}
+plot(lda.fit)
+```
+
+(f)
+
+```{r 3f}
+lda.pred=predict(lda.fit, Auto.class)
+lda.class=lda.pred$class
+table(lda.class, Auto.class$origin)
+```
+
+(g)
+
+```{r 3g}
+qda.fit=qda(origin ~ mpg + cylinders + horsepower + acceleration + year, data=Auto.class)
+qda.fit
+```
+
+(h)
+
+```{r 3h}
+qda.pred=predict(qda.fit, Auto.class)
+qda.class=qda.pred$class
+table(qda.class, Auto.class$origin)
+```
+
+(i)
+
+Comparison of LDA vs QDA
+
+|             |    LDA           |   QDA            |
+|-------------|------------------|------------------|
+| Accuracy    | `r (220+56)/324` | `r (194+69)/324` |
+| Sensitivity | `r 56/(25+56)`   | `r 69/(51+69)`   |
+| Specificity | `r 23/(220+23)`  | `r 10/(194+10)`  |
+| Precision   | `r 56/(23+56)`   | `r 69/(10+69)`   |

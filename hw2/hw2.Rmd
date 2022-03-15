@@ -1,0 +1,202 @@
+---
+title: "Homework 2"
+author: "Drew Dahlquist"
+date: "1/31/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1.
+
+### a)
+
+The difference between training MSE and test MSE is that training MSE is computed with the data that was used to fit the model or "learn", whereas test MSE is computed with new data that was not used to fit the model.
+
+### b)
+
+The two curves in the right-hand panel show a different trend because training MSE can be made to be 0 if a complex enough mode is used, but test MSE can often never go below some certain threshold of irreducible error in the data generating process (1.0 in this case).
+
+### c)
+
+The linear regression fit causes large test MSE since (simple) linear regression isn't complex enough to model the quadratic trend seen in the data, i.e., it has high bias.
+
+### d)
+
+The spline fit with high degrees of freedom causes large test MSE since it over-fits the training data and fails to capture the true form of the data, i.e., it has high variability.
+
+### e)
+
+The training MSE for the second & third models are lower than the irreducible error since training MSE can be made to be arbitrarily small / equal to 0 (e.g., a polynomial of degree n can fit n+1 data points perfectly).
+
+## 2.
+
+### a)
+
+```{r}
+college = read.csv('College.csv', stringsAsFactors=TRUE)
+```
+
+### b)
+
+```{r}
+rownames(college)=college[,1]
+
+college=college[,-1]
+```
+
+### c)
+
+#### i.
+
+```{r}
+summary(college)
+```
+
+#### ii.
+
+```{r}
+pairs(college[,1:10])
+```
+
+#### iii.
+
+```{r}
+boxplot(college$Outstate ~ college$Private, main="Outstate vs Private", xlab="Private", ylab="Outstate")
+```
+
+#### iv.
+
+```{r}
+Elite=rep("No",nrow(college))
+Elite[college$Top10perc > 50]="Yes"
+Elite=as.factor(Elite)
+college=data.frame(college,Elite)
+
+summary(Elite)
+
+boxplot(college$Outstate ~ college$Elite, main="Outstate vs Elite", xlab="Elite", ylab="Outstate")
+```
+
+#### v.
+
+```{r}
+par(mfrow=c(2,2))
+
+hist(college$Accept, breaks=5, main="Histogram of Accept", xlab="Accept", col="blue")
+hist(college$Accept, breaks=10, main="Histogram of Accept", xlab="Accept", col="orange")
+
+hist(college$F.Undergrad, breaks=4, main="Histogram of F.Undergrad", xlab="F.Undergrad", col="blue")
+hist(college$Accept, breaks=8, main="Histogram of F.Undergrad", xlab="F.Undergrad", col="orange")
+```
+
+## 3.
+
+```{r}
+set.seed(80)
+train.X <- data.frame(x1 = runif(n=100,-1,1), x2 = runif(n=100,-1,1)) # Randomly select 100 locations of (x1, x2)
+prob <- ifelse( (-0.5 < train.X$x1) & (train.X$x1 < 0.5)
+                & (-0.5 < train.X$x2) & (train.X$x2 < 0), 0.9, 0.1)
+# If (x1, x2) is inside the rectangle, prob is 0.9, otherwise, prob is 0.1
+train.Y <- as.factor(runif(n=100) < prob) # Simulate class labels according to prob
+colors <- c("skyblue","red")
+plot(train.X$x1, train.X$x2, pch=20, col=colors[factor(train.Y)])
+segments(-0.5, -0.5, 0.5, -0.5, col="orange", lwd=2)
+segments(-0.5, -0.5, -0.5, 0, col="orange", lwd=2)
+segments(-0.5, 0, 0.5, 0, col="orange", lwd=2)
+segments(0.5, -0.5, 0.5, 0, col="orange", lwd=2)
+```
+
+### a)
+
+The Bayes error rate for this problem is 0.1.
+
+### b)
+
+```{r}
+set.seed(3) # for reproduction
+coins = rbinom(100, 1, 0.5) # simulate 100 coin tosses
+print(ifelse(coins == 1, TRUE, FALSE)) # Label 1 == TRUE == Heads
+print(sum(coins)/100) # get frequency of heads
+```
+
+### c)
+
+```{r}
+xGrid.1d <- seq(-1,1,0.02)
+nx <- length(xGrid.1d)
+xGrid.2d <- data.frame(x1=rep(xGrid.1d, each=nx), x2=rep(xGrid.1d,times=nx))
+
+library(class)
+set.seed(1)
+# Set a random seed because if several observations are tied as nearest neighbors,
+# then R will randomly break the tie. Setting a seed number makes us obtain
+# the same prediction outcomes when we repeatedly run this code.
+knn.pred <- knn(train=train.X, test=xGrid.2d, cl=train.Y, k=1)
+# The predicted class labels of each data points in xGrid.2d will be stored
+# in knn.pred object
+plot(xGrid.2d$x1, xGrid.2d$x2, pch=3, col=colors[factor(knn.pred)])
+segments(-0.5, -0.5, 0.5, -0.5, col="orange", lwd=2)
+segments(-0.5, -0.5, -0.5, 0, col="orange", lwd=2)
+segments(-0.5, 0, 0.5, 0, col="orange", lwd=2)
+segments(0.5, -0.5, 0.5, 0, col="orange", lwd=2)
+```
+
+The outcome from running KNN with k=1 is that the resulting predictions are too complex and have high variability to the data. Knowing the true form of the data, k=1 does not satisfy the prediction outcome.
+
+### d)
+
+```{r echo=FALSE}
+par(mfrow=c(2,2))
+
+xGrid.1d <- seq(-1,1,0.02)
+nx <- length(xGrid.1d)
+xGrid.2d <- data.frame(x1=rep(xGrid.1d, each=nx), x2=rep(xGrid.1d,times=nx))
+
+library(class)
+set.seed(1)
+# Set a random seed because if several observations are tied as nearest neighbors,
+# then R will randomly break the tie. Setting a seed number makes us obtain
+# the same prediction outcomes when we repeatedly run this code.
+knn.pred <- knn(train=train.X, test=xGrid.2d, cl=train.Y, k=3)
+# The predicted class labels of each data points in xGrid.2d will be stored
+# in knn.pred object
+plot(xGrid.2d$x1, xGrid.2d$x2, pch=3, col=colors[factor(knn.pred)], main='k = 3')
+segments(-0.5, -0.5, 0.5, -0.5, col="orange", lwd=2)
+segments(-0.5, -0.5, -0.5, 0, col="orange", lwd=2)
+segments(-0.5, 0, 0.5, 0, col="orange", lwd=2)
+segments(0.5, -0.5, 0.5, 0, col="orange", lwd=2)
+
+knn.pred <- knn(train=train.X, test=xGrid.2d, cl=train.Y, k=5)
+# The predicted class labels of each data points in xGrid.2d will be stored
+# in knn.pred object
+plot(xGrid.2d$x1, xGrid.2d$x2, pch=3, col=colors[factor(knn.pred)], main='k = 5')
+segments(-0.5, -0.5, 0.5, -0.5, col="orange", lwd=2)
+segments(-0.5, -0.5, -0.5, 0, col="orange", lwd=2)
+segments(-0.5, 0, 0.5, 0, col="orange", lwd=2)
+segments(0.5, -0.5, 0.5, 0, col="orange", lwd=2)
+
+knn.pred <- knn(train=train.X, test=xGrid.2d, cl=train.Y, k=7)
+# The predicted class labels of each data points in xGrid.2d will be stored
+# in knn.pred object
+plot(xGrid.2d$x1, xGrid.2d$x2, pch=3, col=colors[factor(knn.pred)], main='k = 7')
+segments(-0.5, -0.5, 0.5, -0.5, col="orange", lwd=2)
+segments(-0.5, -0.5, -0.5, 0, col="orange", lwd=2)
+segments(-0.5, 0, 0.5, 0, col="orange", lwd=2)
+segments(0.5, -0.5, 0.5, 0, col="orange", lwd=2)
+
+knn.pred <- knn(train=train.X, test=xGrid.2d, cl=train.Y, k=9)
+# The predicted class labels of each data points in xGrid.2d will be stored
+# in knn.pred object
+plot(xGrid.2d$x1, xGrid.2d$x2, pch=3, col=colors[factor(knn.pred)], main='k = 9')
+segments(-0.5, -0.5, 0.5, -0.5, col="orange", lwd=2)
+segments(-0.5, -0.5, -0.5, 0, col="orange", lwd=2)
+segments(-0.5, 0, 0.5, 0, col="orange", lwd=2)
+segments(0.5, -0.5, 0.5, 0, col="orange", lwd=2)
+```
+
+### e)
+
+k = 5 seems to produce a reasonable outcome, since k = 3 classifies more area corectly but still has a few outliers and k = 7 has the same general shape as k = 5 but classifies less area correctly.
