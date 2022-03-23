@@ -1,0 +1,204 @@
+---
+title: "Homework 6"
+author: "Drew Dahlquist"
+date: "3/19/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1)
+
+```{r 1}
+set.seed(1)
+x1 <- runif(100, -1.7, 1.7)
+x2 <- x1^2; x3 <- x1^3; x4 <- x1^4; x5 <- x1^5
+x6 <- x1^6; x7 <- x1^7; x8 <- x1^8; x9 <- x1^9
+x10 <- x1^10
+y <- -1.3 + 2*x1 + 1.5*x2 - 2*x3 + rnorm(100)
+data_df <- data.frame(y, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10)
+data_mat <- as.matrix(data_df)
+# We prepare the data set in two different objects: data_df (data frame), data_mat (matrix)
+plot(x1, y)
+```
+
+(a)
+
+x_1, x_2, and x_3 should be found to be associated with the response variable.
+
+(b)
+
+1-predictor: x_5
+
+3-predictor: x_1, x_2, x_3
+
+5-predictor: x_1, x_4, x_5, x_6, x_9
+
+```{r 1b}
+library(leaps)
+
+regfit.full = regsubsets(y ~ ., data=data_df, nvmax=10)
+summary(regfit.full)
+```
+
+(c)
+
+Cp: 5 predictor model
+
+BIC: 3 predictor model
+
+Adj R^2: 6 predictor model
+
+```{r 1c}
+reg.summary = summary(regfit.full)
+
+crit = matrix(NA,3,10)
+colnames(crit) = c('1','2','3','4','5','6','7','8','9','10')
+rownames(crit) = c('Cp','BIC','Adj R^2')
+
+crit[1,] = reg.summary$cp
+crit[2,] = reg.summary$bic
+crit[3,] = reg.summary$adjr2
+
+crit
+```
+
+(d)
+
+Cp: `r coef(regfit.full,5)`
+
+BIC: `r coef(regfit.full,3)`
+
+Adj R^2: `r coef(regfit.full,6)`
+
+(e)
+
+The model with 4 predictors has the best BIC score. x_1, x_2, x_5, and x_9 are included in the model.
+
+```{r 1e}
+regfit.fwd = regsubsets(y ~ ., data=data_df, nvmax=10, method="forward")
+
+summary(regfit.fwd)
+
+bic = matrix(NA,1,10)
+colnames(bic) = c('1','2','3','4','5','6','7','8','9','10')
+rownames(bic) = c('BIC')
+
+bic[1,] = summary(regfit.fwd)$bic
+
+bic
+```
+
+(f)
+
+The model with 4 predictors has the best Cp score. x_1, x_3, x_4, and x_6 are included in the model.
+
+```{r 1f}
+regfit.bwd = regsubsets(y ~ ., data=data_df, nvmax=10, method="backward")
+
+summary(regfit.bwd)
+
+cp = matrix(NA,1,10)
+colnames(cp) = c('1','2','3','4','5','6','7','8','9','10')
+rownames(cp) = c('Cp')
+
+cp[1,] = summary(regfit.fwd)$cp
+
+cp
+```
+
+(g)
+
+The best models, according to Cp, BIC, and Adj R^2, from full subset selection had 5, 3, and 6 predictors, respectively. The best models from forward and backwards subset selection both has 4 predictors, although the individual predictors were not the same. Knowing the true form of the data, using full subset selection with the BIC score would yield the best model as it only includes the 3 true variables that determine the response variable. A disadvantage of both forward and backward subset selection is that they make "greedy" decisions when fitting each model, that they are then stuck with as they add more predictors. Full subset selection avoids this but is more computationally expensive.
+
+### 2)
+
+```{r 2}
+grid=10^seq(10,-2,length=100)
+```
+
+(a)
+
+```{r 2a}
+set.seed(1)
+size=100
+train=sample(size, 0.7*size)
+```
+
+(b)
+
+The best value of $\lambda$ is approximately 4.
+
+```{r 2b}
+library(glmnet)
+
+x=data_mat[train,2:11]
+y=data_mat[train,1]
+
+lasso.mod=glmnet(x,y,alpha=1,lambda=grid)
+
+## CV to find best lambda
+set.seed(2)
+cv.out=cv.glmnet(x,y,alpha=1)
+plot(cv.out)
+bestlam=cv.out$lambda.min
+```
+
+(c)
+
+```{r 2c}
+x=data_mat[-train,2:11]
+y=data_mat[-train,1]
+lasso.pred=predict(lasso.mod,s=bestlam,newx=x)
+mean((lasso.pred-y)^2)
+```
+
+Test MSE = `r mean((lasso.pred-y)^2)`.
+
+(d)
+
+The regression coefficients of the model with the best lambda parameter isn't too far off the true data generating process. The intercept, and x_1 and x_2 coefficients are near the true values, however x_3 is left out in favor of x_4 and x_5.
+
+```{r 3d}
+out=glmnet(data_mat[,2:11],data_mat[,1],alpha=1,lambda=grid)
+lasso.coef=predict(out,type="coefficients",s=bestlam)[1:10,]
+lasso.coef
+lasso.coef[lasso.coef!=0]
+```
+
+### 3)
+
+(a)
+
+5 principal components has the best MSEP as shown by the validation plot, but we could also likely consider 3 principal components since it's about within 1 standard deviation from the 5 principal component MSEP.
+
+```{r 3a}
+library(pls)
+
+set.seed(3)
+pcr.fit= pcr(y ~ ., data=data_df,subset=train,scale=TRUE, validation="CV")
+
+summary(pcr.fit)
+validationplot(pcr.fit,val.type="MSEP")
+```
+
+(b)
+
+```{r 3b}
+pcr.pred=predict(pcr.fit, x[-train,], ncomp=3)
+mean((pcr.pred-y[-train])^2)
+```
+
+Test MSE = `r mean((pcr.pred-y[-train])^2)`.
+
+(c)
+
+96.29% variability of the predictors is explained by the PCs.
+72.19% variability of the response variable is explained by the PCs.
+
+```{r 3c}
+pcr.fit=pcr(y~., data=data_df, scale=TRUE,ncomp=3)
+summary(pcr.fit)
+```
