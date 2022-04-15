@@ -1,0 +1,99 @@
+---
+title: "Homework 7"
+author: "Drew Dahlquist"
+date: "4/12/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1.
+
+$\beta_0$ = `r mean(c(3.5, 1.2))`, $\beta_1$ = `r mean(c(6.9, 2.6))`, $\beta_2$ = `r mean(c(4.4, 3.0, 8.5))`.
+
+## 2.
+
+$$\\[3in]$$
+
+## 3.
+
+```{r 3, echo=F}
+library(ISLR)
+library(splines)
+library(gam)
+Auto = Auto
+attach(Auto)
+```
+
+(a)
+
+According to the ANOVA, a quadratic fit provides a reasonable fit to the data.
+
+```{r 3a, echo=F}
+fit.1 = lm(horsepower ~ acceleration)
+fit.2 = lm(horsepower ~ poly(acceleration,2))
+fit.3 = lm(horsepower ~ poly(acceleration,3))
+
+anova(fit.1,fit.2,fit.3)
+```
+
+(b)
+
+```{r 3b, echo=F}
+acclims = range(acceleration)
+acc.grid = seq(from = acclims[1], to = acclims[2])
+
+fit = lm(horsepower ~ ns(acceleration, df=4)) # natural spline with 4 dof
+pred = predict(fit, newdata = list(acceleration = acc.grid), se = T)
+
+plot(acceleration, horsepower, col="gray")
+lines(acc.grid, pred$fit, col="red", lwd=2)
+lines(acc.grid, pred$fit+2*pred$se, lty="dashed", col="red")
+lines(acc.grid, pred$fit-2*pred$se, lty="dashed", col="red")
+```
+
+(c)
+
+```{r 3c, echo=F, warning=FALSE}
+fit = smooth.spline(acceleration, horsepower, cv=TRUE)
+# The value of lambda is determined by CV. The corresponding dof is
+fit$df
+
+plot(acceleration, horsepower, col="gray")
+lines(fit,col="red",lwd=2)
+```
+
+(d)
+
+The model with span = 0.2 will have more bias but less variance than the model with span = 0.5 (which will have less bias but more variance).
+
+```{r 3d, echo=F}
+fit=loess(horsepower ~ acceleration, span=.2) # local linear regression using span 0.2
+fit2=loess(horsepower ~ acceleration, span=.5) # local linear regression using span 0.5
+
+plot(acceleration, horsepower, col="gray")
+lines(acc.grid, predict(fit, data.frame(acceleration=acc.grid)), col="red", lwd=2)
+lines(acc.grid, predict(fit2, data.frame(acceleration=acc.grid)), col="blue", lwd=2)
+legend("topright",legend=c("Span=0.2","Span=0.5"),col=c("red","blue"),lty=1,lwd=2,cex=.8)
+```
+
+(e)
+
+GAM #2 is the best of the fitted models for the data.
+
+```{r 3e, echo=F}
+gam1 = gam(horsepower ~ ns(acceleration, 5), data = Auto)
+gam2 = gam(horsepower ~ weight + ns(acceleration, 5), data = Auto)
+gam3 = gam(horsepower ~ ns(weight, 5) + ns(acceleration, 5), data = Auto)
+
+anova(gam1, gam2, gam3, test="F")
+```
+
+(f)
+
+```{r 3f, echo=F}
+par(mfrow=c(1,2))
+plot(gam2, se=TRUE, col="blue")
+```
