@@ -1,0 +1,138 @@
+---
+title: "Homework 8"
+author: "Drew Dahlquist"
+date: "4/21/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1.
+
+```{r 1}
+bike = read.csv("bike.csv")
+bike = bike[,-1] # remove the index column
+
+# some variables are transformed to factors.
+bike$season = as.factor(bike$season)
+bike$workingday = as.factor(bike$workingday)
+bike$weathersit = as.factor(bike$weathersit)
+
+# check the data structure
+str(bike)
+
+set.seed(1)
+train = sample(1:nrow(bike), 0.7*nrow(bike))
+bike.test = bike[-train, ]
+```
+
+(a)
+
+The tree has 9 terminal nodes, and a residual mean deviance of 1496000.
+
+```{r 1a}
+library(tree)
+
+tree.fit = tree(cnt ~ . -dteday, bike, subset=train)
+
+summary(tree.fit)
+```
+
+(b)
+
+The `temp` is the most informative predictor in this model, followed by `atemp` if `temp` < 0.43 or `hum` if `temp` > 0.43, and so on.
+
+```{r 1b}
+plot(tree.fit)
+text(tree.fit, pretty=0)
+```
+
+(c)
+
+To predict a new value, we start at the root node and evaluate the condition, then go down the tree left or right. We recursively repeat this process until we reach a leaf node, which corresponds to our prediction.
+
+`temp`: 0.426667 < 0.432373
+`atemp`: 0.426737 > 0.257889
+`season`: 3 != 1,2
+Predict: 4329
+
+(d)
+
+In this case, pruning the tree isn't necessary.
+
+```{r 1d}
+plot(cv.tree(tree.fit), type="b")
+```
+
+(e)
+
+```{r 1e}
+yhat = predict(tree.fit, newdata = bike.test)
+mean((yhat-bike.test$"cnt")^2)
+```
+
+The test MSE is `r mean((yhat-bike.test$"cnt")^2)`.
+
+(f)
+
+```{r 1f}
+library(randomForest)
+
+set.seed(1)
+
+bag.bike=randomForest(cnt~.-dteday,data=bike,subset=train,importance=TRUE)
+bag.bike
+```
+
+The training MSE is 1504934.
+
+(g)
+
+```{r 1g}
+importance(bag.bike)
+```
+
+(h)
+
+```{r 1h}
+yhat.bag = predict(bag.bike,newdata=bike.test)
+mean((yhat.bag-bike.test$cnt)^2)
+```
+
+(i)
+
+```{r 1i}
+set.seed(1)
+
+rf.bike=randomForest(cnt~.-dteday,data=bike,subset=train,mtry=2,importance=TRUE)
+yhat.rf = predict(rf.bike,newdata=bike.test)
+mean((yhat.rf-bike.test$cnt)^2)
+```
+
+(j)
+
+For the boosting 4 models, each with a differing number of tree's used, the training MSE decreases initially then begins to increase again. This is telling that the number of trees used in a boosted model controls the bias-variance trade off. Namely, a small value for n.trees has low bias, high variance, whereas a large value for n.trees has a high bias, low variance.
+
+```{r 1j}
+library(gbm)
+
+set.seed(1)
+
+# 4 boosted models with differing number of trees
+boost.bike.1 = gbm(cnt~.-dteday,data=bike[train,],distribution="gaussian",interaction.depth=1,n.trees=50)
+boost.bike.2 = gbm(cnt~.-dteday,data=bike[train,],distribution="gaussian",interaction.depth=1,n.trees=100)
+boost.bike.3 = gbm(cnt~.-dteday,data=bike[train,],distribution="gaussian",interaction.depth=1,n.trees=500)
+boost.bike.4 = gbm(cnt~.-dteday,data=bike[train,],distribution="gaussian",interaction.depth=1,n.trees=1000)
+
+yhat.boost.1 = predict(boost.bike.1,newdata=bike.test,n.trees=50)
+yhat.boost.2 = predict(boost.bike.2,newdata=bike.test,n.trees=100)
+yhat.boost.3 = predict(boost.bike.3,newdata=bike.test,n.trees=500)
+yhat.boost.4 = predict(boost.bike.4,newdata=bike.test,n.trees=1000)
+
+mean((yhat.boost.1-bike.test$cnt)^2)
+mean((yhat.boost.2-bike.test$cnt)^2)
+mean((yhat.boost.3-bike.test$cnt)^2)
+mean((yhat.boost.4-bike.test$cnt)^2)
+```
