@@ -15,9 +15,17 @@ library(tree)
 tree.fit = tree(Class ~ ., beans, subset=train)
 plot(cv.tree(tree.fit), type="b")
 
+plot(tree.fit)
+text(tree.fit, pretty=0)
+
 pred = predict(tree.fit, newdata = beans[-train,], type="class")
-table = table(beans.test$Class, yhat)
+table = table(beans.test$Class, pred)
+table
 
-# some other method? svm?
+# boosting
 
-# maybe one more? 
+
+# random forest
+
+
+# one-v-one svm
