@@ -23,7 +23,25 @@ table = table(beans.test$Class, pred)
 table
 
 # boosting
+library(gbm)
 
+set.seed(1)
+
+# 3 boosted models with differing number of trees
+gbm.beans.1 = gbm(Class ~ ., data=beans[train,], interaction.depth=3,n.trees=100)
+gbm.beans.2 = gbm(Class ~ ., data=beans[train,], interaction.depth=3,n.trees=1000)
+
+pred.gbm.1 = predict.gbm(gbm.beans.1, newdata=beans.test, type="response")
+pred.gbm.2 = predict.gbm(gbm.beans.2, newdata=beans.test, type="response")
+
+pred.gbm.1 = colnames(pred.gbm.1)[apply(pred.gbm.1, 1, which.max)]
+pred.gbm.2 = colnames(pred.gbm.2)[apply(pred.gbm.2, 1, which.max)]
+
+table.1 = table(beans.test$Class, pred.gbm.1)
+table.2 = table(beans.test$Class, pred.gbm.2)
+
+table.1
+table.2
 
 # random forest
 
