@@ -43,7 +43,6 @@ pretty.gbm.tree(gbm.beans.3)
 #pred and make confusion matrix for each tree
 pred.gbm.1 = predict.gbm(gbm.beans.1, newdata=beans.test, type="response")
 pred.gbm.2 = predict.gbm(gbm.beans.2, newdata=beans.test, type="response")
-
 pred.gbm.3 = predict.gbm(gbm.beans.3, newdata=beans.test, type="response")
 
 pred.gbm.1 = colnames(pred.gbm.1)[apply(pred.gbm.1, 1, which.max)]
@@ -84,7 +83,5 @@ tableSVM1
 tableSVM2
 tableSVM3
 tableSVM4
-
-plot(svmBeans, beans)
 
 
