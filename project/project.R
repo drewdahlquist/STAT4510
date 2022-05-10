@@ -1,8 +1,8 @@
 library(dplyr)
 
 # data
-#beans = read.csv("/Users/drew/Desktop/OneDrive - University of Missouri/sp 22/STAT 4510/project/beans.csv")
-beans = read.csv("D:/Docs/Homework/STAT4510/project/beans.csv")
+beans = read.csv("/Users/drew/Desktop/OneDrive - University of Missouri/sp 22/STAT 4510/project/beans.csv")
+# beans = read.csv("D:/Docs/Homework/STAT4510/project/beans.csv")
 beans$Class = as.factor(beans$Class)
 
 # train/testing split
@@ -19,6 +19,11 @@ plot(cv.tree(tree.fit), type="b")
 
 plot(tree.fit)
 text(tree.fit, pretty=0)
+
+plot(beans[,c(3,4)],col=c(1:7)[beans$Class])
+legend("topleft",legend=levels(beans$Class),col=c(1:7),pch=1)
+plot(beans[,c(3,13)],col=c(1:7)[beans$Class])
+legend("topright",legend=levels(beans$Class),col=c(1:7),pch=1)
 
 pred = predict(tree.fit, newdata = beans[-train,], type="class")
 table = table(beans.test$Class, pred)
