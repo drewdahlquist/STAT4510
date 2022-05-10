@@ -62,9 +62,6 @@ table.1
 table.2
 table.3
 
-# random forest
-
-
 # one-v-one svm
 library(e1071)
 ?svm
